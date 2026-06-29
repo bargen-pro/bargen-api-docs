@@ -33,6 +33,10 @@ curl "https://api.bargen.pro/v1/barcode/qrcode?data=Hello%20World" \
 
 The API returns the barcode image directly. Save it or embed it in your application.
 
+## Use with an AI coding agent
+
+Integrating with Claude Code, OpenAI Codex, or opencode? Copy **[PROMPT.md](PROMPT.md)** into your agent — it's a complete, ready-to-paste brief covering authentication, endpoints, every barcode type, output formats, plans, and error handling. The same prompt is available in-app via the **LLM Prompt** button at [bargen.pro/docs](https://bargen.pro/docs).
+
 ## Supported Barcode Types
 
 Types are grouped by the minimum plan that unlocks them.
