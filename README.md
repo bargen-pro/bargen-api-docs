@@ -9,7 +9,7 @@ Generate high-quality barcodes and QR codes via a simple REST API. Perfect for e
 
 ## Features
 
-- **19 Barcode Formats** - 1D barcodes, 2D codes, GS1, and postal codes
+- **25 Barcode Types** - 1D barcodes, 2D codes, GS1, and postal codes
 - **Multiple Output Formats** - SVG, PNG, PDF, EPS
 - **GS1 Validation** - Built-in Application Identifier validation for GS1-128 and GS1 DataMatrix
 - **High Resolution** - Configurable zoom for print-quality output
@@ -35,7 +35,9 @@ The API returns the barcode image directly. Save it or embed it in your applicat
 
 ## Supported Barcode Types
 
-### 1D Barcodes
+Types are grouped by the minimum plan that unlocks them.
+
+### 1D Barcodes (Free)
 | Type | Description | Example Data |
 |------|-------------|--------------|
 | `code128` | High-density alphanumeric | `ABC-12345` |
@@ -44,10 +46,13 @@ The API returns the barcode image directly. Save it or embed it in your applicat
 | `ean8` | Small packages | `96385074` |
 | `upca` | Retail products (USA) | `012345678905` |
 | `upce` | Compressed UPC | `01234565` |
+| `itf12` | Interleaved 2 of 5 (12) | `123456789012` |
 | `itf14` | Shipping cartons | `15400141288763` |
+| `itf16` | Interleaved 2 of 5 (16) | `1234567890123456` |
+| `gls-ecsomag` | GLS eCsomag parcel | `12345678901` |
 | `codabar` | Libraries, blood banks | `A12345B` |
 
-### 2D Codes
+### 2D Codes (Free)
 | Type | Description | Example Data |
 |------|-------------|--------------|
 | `qrcode` | URLs, vCards, general data | `https://example.com` |
@@ -55,13 +60,14 @@ The API returns the barcode image directly. Save it or embed it in your applicat
 | `aztec` | Transport tickets, IDs | `AZTEC-DATA` |
 | `pdf417` | IDs, transport | `PDF417DATA` |
 
-### GS1 Barcodes (Pro+)
+### GS1 & MicroQR (Pro)
 | Type | Description | Example Data |
 |------|-------------|--------------|
 | `gs1-128` | Logistics, healthcare | `(01)00012345678905(10)ABC123` |
 | `gs1-datamatrix` | Pharmaceutical | `(01)00012345678905(17)251231` |
+| `microqr` | Compact QR for small areas | `MICRO123` |
 
-### Postal Codes (Enterprise+)
+### Postal & Advanced 2D (Business)
 | Type | Description | Example Data |
 |------|-------------|--------------|
 | `imb` | USPS Intelligent Mail | `01234567890123456789-12345` |
@@ -69,6 +75,8 @@ The API returns the barcode image directly. Save it or embed it in your applicat
 | `kix` | Dutch PostNL | `1234AA111` |
 | `postnet` | US ZIP encoding | `12345` |
 | `planet` | USPS tracking | `12345678901` |
+| `maxicode` | UPS shipping | `MAXICODE` |
+| `dotcode` | High-speed marking | `DOTCODE123` |
 
 ## API Reference
 
@@ -83,16 +91,16 @@ GET https://api.bargen.pro/v1/barcode/{type}
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | `data` | string | Yes | - | Data to encode |
-| `format` | string | No | `svg` | Output: `svg`, `png`, `pdf`, `eps` |
+| `format` | string | No | `svg` | Output: `svg`, `png`, `pdf`, `eps` (plan-gated) |
 | `scale` | integer | No | `2` | Scale factor (1-10) |
-| `height` | integer | No | auto | Height in pixels (1D codes) |
-| `width` | integer | No | auto | Width in modules (2D codes) |
+| `height` | integer | No | auto | Height in pixels (10-2000) |
+| `width` | integer | No | auto | Width in pixels (10-2000) |
 | `color` | string | No | `000000` | Foreground color (hex) |
 | `bgcolor` | string | No | `ffffff` | Background color (hex) |
 | `includetext` | boolean | No | `true` | Show human-readable text |
 | `fontsize` | integer | No | `14` | Font size (8-24) |
 | `ecl` | string | No | `M` | Error correction (QR): L/M/Q/H |
-| `pngzoom` | float | No | `1` | Zoom for PNG/PDF/EPS (0.5-10) |
+| `pngzoom` | float | No | `1` | Extra zoom for PNG output (0.5-10) |
 
 #### Authentication
 
@@ -116,7 +124,6 @@ Include your API key using one of these methods:
 
 ```json
 {
-  "success": false,
   "error": "Invalid barcode data"
 }
 ```
@@ -127,7 +134,7 @@ Include your API key using one of these methods:
 GET https://api.bargen.pro/v1/formats
 ```
 
-Returns all supported barcode types with plan requirements.
+Returns all supported barcode types with plan requirements. No authentication required.
 
 ### Validate API Key
 
@@ -136,6 +143,26 @@ GET https://api.bargen.pro/v1/validate
 ```
 
 Check if your API key is valid and view usage statistics.
+
+### Batch Generate
+
+```
+POST https://api.bargen.pro/v1/barcode/batch
+```
+
+Generate up to 50 barcodes in one request. Send a JSON body:
+
+```json
+{
+  "codes": [
+    { "type": "qrcode", "data": "https://example.com" },
+    { "type": "ean13",  "data": "5901234123457" }
+  ],
+  "options": { "scale": 3 }
+}
+```
+
+Each result's `svg` field is base64-encoded. Batch output is always SVG.
 
 ### Health Check
 
@@ -218,12 +245,12 @@ file_put_contents('barcode.svg', $svg);
 
 ## Pricing
 
-| Plan | Price | API Calls | Features |
-|------|-------|-----------|----------|
-| **Free** | $0 | 1,000/month | All barcode types, SVG output |
-| **Pro** | $9.99/month | Unlimited | + Priority support, batch generation |
-| **Enterprise** | $99/month | 100,000/month | + All formats (PNG/PDF/EPS), GS1/Postal, 99.9% SLA |
-| **Enterprise Plus** | $249/month | Unlimited | + Dedicated account manager, custom SLA |
+| Plan | Price | API Calls | Output Formats | Barcode Types |
+|------|-------|-----------|----------------|---------------|
+| **Free** | $0 | 1,000/month | SVG | 15 standard types |
+| **Pro** | $9.99/month | 10,000/month | SVG, PNG | + GS1-128, GS1 DataMatrix, MicroQR |
+| **Business** | $29/month | 100,000/month | SVG, PNG, PDF, EPS | All 25 incl. postal, 99.9% SLA |
+| **Enterprise** | Custom | Unlimited | All | All 25, dedicated support, custom SLA |
 
 [View full pricing](https://bargen.pro/pricing) | [Sign up free](https://bargen.pro/register)
 
@@ -247,11 +274,11 @@ For GS1-128 and GS1 DataMatrix barcodes, use parentheses around Application Iden
 ## Rate Limits
 
 - **Free**: 1,000 requests/month
-- **Pro**: Unlimited
-- **Enterprise**: 100,000 requests/month
-- **Enterprise Plus**: Unlimited
+- **Pro**: 10,000 requests/month
+- **Business**: 100,000 requests/month
+- **Enterprise**: Unlimited
 
-When limit is exceeded, API returns `402 Payment Required`.
+When the limit is exceeded, the API returns `402 Payment Required` until the next billing period or until you upgrade.
 
 ## Support
 
@@ -270,4 +297,4 @@ When limit is exceeded, API returns `402 Payment Required`.
 
 ---
 
-© 2025 BarGen API. All rights reserved.
+© 2026 BarGen API. All rights reserved.
